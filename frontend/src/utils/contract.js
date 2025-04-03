@@ -1,5 +1,5 @@
-import web3 from './web3';
 import DIDRegistry from '../contracts/DIDRegistry.json';
+import web3 from './web3';
 
 export const initializeContract = async () => {
   try {

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import web3 from "./utils/web3";
-import didRegistry from "./utils/contract";
+import { initializeContract } from "./utils/contract";
+import DIDRegistry from "./contracts/DIDRegistry.json";
 import Spinner from "./components/common/Spinner";
 import Modal from "./components/common/Modal";
 import WalletConnection from "./components/wallet/WalletConnection";
@@ -14,6 +15,7 @@ function App() {
   const [isConnected, setIsConnected] = useState(false);
   const [modal, setModal] = useState({ isOpen: false, title: "", message: "", type: "info" });
   const [isLoading, setIsLoading] = useState(false);
+  const [didRegistry, setDidRegistry] = useState(null);
 
   const HARDHAT_NETWORK_ID = '0x7A69'; // 31337 in hex
 
@@ -25,32 +27,75 @@ function App() {
     setModal({ isOpen: false, title: "", message: "", type: "info" });
   };
 
-  const connectWallet = async () => {
-    setIsLoading(true);
-    try {
-      if (!window.ethereum) {
-        setError("MetaMask is required!");
-        return;
-      }
-      console.log("Requesting accounts...");
-      const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
-      if (accounts.length === 0) {
-        setError("No accounts found in MetaMask!");
-        return;
-      }
+  const handleAccountsChanged = (accounts) => {
+    if (accounts.length === 0) {
+      // MetaMask is locked or the user has not connected any accounts
+      setAccount(null);
+      setError("Please connect to MetaMask.");
+    } else if (accounts[0] !== account) {
+      // Account changed
       setAccount(accounts[0]);
-      setError(null);
-      console.log("Connected account:", accounts[0]);
+      // Re-initialize contract with new account
+      initializeContract().then(contract => {
+        setDidRegistry(contract);
+      }).catch(error => {
+        console.error("Error re-initializing contract:", error);
+        setError(error.message);
+      });
+    }
+  };
 
-      const chainId = await window.ethereum.request({ method: 'eth_chainId' });
-      if (chainId !== HARDHAT_NETWORK_ID) {
-        setError("Please switch to Hardhat network in MetaMask!");
+  const handleChainChanged = (chainId) => {
+    setNetworkId(chainId);
+    if (chainId !== HARDHAT_NETWORK_ID) {
+      setError("Please switch to Hardhat network!");
+    } else {
+      setError(null);
+      // Re-initialize contract when network changes
+      initializeContract().then(contract => {
+        setDidRegistry(contract);
+      }).catch(error => {
+        console.error("Error re-initializing contract:", error);
+        setError(error.message);
+      });
+    }
+  };
+
+  const connectWallet = async () => {
+    try {
+      if (window.ethereum) {
+        // First, disconnect any existing connection
+        await window.ethereum.request({
+          method: 'wallet_requestPermissions',
+          params: [{ eth_accounts: {} }]
+        });
+        
+        // Then request accounts to show the popup
+        const accounts = await window.ethereum.request({ 
+          method: 'eth_requestAccounts',
+          params: [{ force: true }] // Force the popup to show
+        });
+        
+        // Get chain ID
+        const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+        
+        setAccount(accounts[0]);
+        setNetworkId(chainId);
+        setError(null);
+        
+        // Initialize contract with the new account
+        const contract = await initializeContract();
+        setDidRegistry(contract);
+        
+        // Set up event listeners for account and chain changes
+        window.ethereum.on('accountsChanged', handleAccountsChanged);
+        window.ethereum.on('chainChanged', handleChainChanged);
+      } else {
+        setError("Please install MetaMask!");
       }
     } catch (error) {
-      setError("Error connecting to MetaMask: " + error.message);
-      console.error("Error connecting:", error);
-    } finally {
-      setIsLoading(false);
+      console.error("Error connecting wallet:", error);
+      setError(error.message);
     }
   };
 
