@@ -148,7 +148,9 @@ function App() {
   }, []);
 
   const registerDID = async () => {
+    console.log('Register DID button clicked');
     if (!account) {
+      console.error('No account connected');
       setError("Please connect MetaMask first!");
       return;
     }
@@ -158,13 +160,25 @@ function App() {
       console.log("Attempting to register DID...");
       console.log("Current account:", account);
       console.log("Current network:", networkId);
-      console.log("Contract methods available:", Object.keys(didRegistry.methods));
-      console.log("Contract address:", didRegistry._address);
+      
+      // Log contract instance
+      console.log("Contract instance:", didRegistry);
+      console.log("Contract methods:", Object.keys(didRegistry.methods));
       
       try {
         console.log("Checking for existing DID...");
-        const existingDID = await didRegistry.methods.getDID(account).call();
-        console.log("Existing DID:", existingDID);
+        console.log("Making getDID call with account:", account);
+        
+        // Add timeout to prevent hanging
+        const timeoutPromise = new Promise((_, reject) => {
+          setTimeout(() => reject(new Error('getDID call timed out after 30 seconds')), 30000);
+        });
+        
+        const getDIDPromise = didRegistry.methods.getDID(account).call();
+        const existingDID = await Promise.race([getDIDPromise, timeoutPromise]);
+        
+        console.log("Existing DID check result:", existingDID);
+        
         if (existingDID && existingDID !== '') {
           showModal(
             "DID Already Registered",
@@ -174,7 +188,15 @@ function App() {
           return;
         }
       } catch (checkError) {
-        console.log("Error checking existing DID:", checkError);
+        console.error("Error checking existing DID:", checkError);
+        if (checkError.message.includes('timed out')) {
+          showModal(
+            "Error",
+            "The operation timed out. Please check your network connection and try again.",
+            "error"
+          );
+          return;
+        }
         if (!checkError.message.includes("DID not found")) {
           throw checkError;
         }
@@ -203,7 +225,7 @@ function App() {
           "success"
         );
       } catch (contractError) {
-        console.log("Contract interaction error:", contractError);
+        console.error("Contract interaction error:", contractError);
         if (contractError.message.includes("DID already registered")) {
           showModal(
             "DID Already Registered",
@@ -211,7 +233,6 @@ function App() {
             "error"
           );
         } else {
-          console.error("Contract interaction error:", contractError);
           showModal(
             "Registration Error",
             `Failed to register DID: ${contractError.message}`,
@@ -220,20 +241,21 @@ function App() {
         }
       }
     } catch (error) {
-      console.log("Error in registerDID:", error);
+      console.error("Error in registerDID:", error);
       showModal(
         "Error",
         `Failed to register DID: ${error.message}`,
         "error"
       );
-      console.error("Error registering DID:", error);
     } finally {
       setIsLoading(false);
     }
   };
 
   const getDID = async () => {
+    console.log('Get DID button clicked');
     if (!account) {
+      console.error('No account connected');
       setError("Please connect MetaMask first!");
       return;
     }
@@ -243,12 +265,14 @@ function App() {
       console.log("Attempting to get DID...");
       console.log("Current account:", account);
       console.log("Current network:", networkId);
-      console.log("Contract methods available:", Object.keys(didRegistry.methods));
-      console.log("Contract address:", didRegistry._address);
       
-      console.log("Calling getDID method...");
+      // Log contract instance
+      console.log("Contract instance:", didRegistry);
+      console.log("Contract methods:", Object.keys(didRegistry.methods));
+      
       const did = await didRegistry.methods.getDID(account).call();
-      console.log("Retrieved DID:", did);
+      console.log("DID lookup result:", did);
+      
       if (did && did !== '') {
         showModal(
           "DID Found",
@@ -263,7 +287,7 @@ function App() {
         );
       }
     } catch (error) {
-      console.log("Error in getDID:", error);
+      console.error("Error in getDID:", error);
       if (error.message.includes("DID not found")) {
         showModal(
           "No DID Found",
@@ -277,7 +301,6 @@ function App() {
           "error"
         );
       }
-      console.error("Error getting DID:", error);
     } finally {
       setIsLoading(false);
     }

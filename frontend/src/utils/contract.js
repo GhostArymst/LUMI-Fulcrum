@@ -1,49 +1,55 @@
 import web3 from './web3';
 import DIDRegistry from '../contracts/DIDRegistry.json';
 
-// Replace this with the address displayed in the console after deployment
-const contractAddress = '0x5FbDB2315678afecb367f032d93F642f64180aa3';
-
-const initializeContract = () => {
-  if (!web3) {
-    throw new Error('Web3 is not initialized. Please check your MetaMask connection.');
-  }
-
-  if (!contractAddress) {
-    throw new Error('Contract address is not set. Please deploy the contract first.');
-  }
-
-  if (!DIDRegistry || !DIDRegistry.abi) {
-    throw new Error('DIDRegistry ABI is not available. Please check the contract compilation.');
-  }
-
-  console.log('Initializing DIDRegistry contract...');
-  console.log('Contract address:', contractAddress);
-  console.log('Contract ABI length:', DIDRegistry.abi.length);
-
+export const initializeContract = async () => {
   try {
-    const didRegistry = new web3.eth.Contract(
-      DIDRegistry.abi,
-      contractAddress
-    );
-
-    // Validate contract initialization
-    if (!didRegistry || !didRegistry.methods) {
-      throw new Error('Contract initialization failed - methods not available');
+    console.log("Initializing contract...");
+    
+    // Check if web3 is initialized
+    if (!web3) {
+      throw new Error("Web3 is not initialized");
     }
-
-    console.log('Contract initialized successfully');
-    console.log('Available methods:', Object.keys(didRegistry.methods));
-
-    return didRegistry;
+    
+    // Get network ID
+    const networkId = await web3.eth.net.getId();
+    console.log("Current network ID:", networkId);
+    
+    // Get accounts
+    const accounts = await web3.eth.getAccounts();
+    console.log("Available accounts:", accounts);
+    
+    // Get contract address from environment
+    const contractAddress = import.meta.env.VITE_CONTRACT_ADDRESS;
+    console.log("Contract address from env:", contractAddress);
+    
+    if (!contractAddress) {
+      throw new Error("Contract address not found in environment variables");
+    }
+    
+    // Get contract ABI
+    const contractABI = DIDRegistry.abi;
+    console.log("Contract ABI length:", contractABI.length);
+    
+    // Create contract instance
+    const contract = new web3.eth.Contract(contractABI, contractAddress);
+    console.log("Contract instance created");
+    
+    // Test contract accessibility
+    try {
+      console.log("Testing contract accessibility...");
+      const testCall = await contract.methods.getDID(accounts[0]).call();
+      console.log("Contract test call successful:", testCall);
+    } catch (testError) {
+      console.error("Contract test call failed:", testError);
+      throw new Error(`Contract not accessible: ${testError.message}`);
+    }
+    
+    return contract;
   } catch (error) {
-    console.error('Error initializing contract:', error);
-    if (error.message.includes('Invalid JSON RPC response')) {
-      throw new Error('Failed to connect to the blockchain. Please check your network connection and MetaMask.');
-    }
+    console.error("Error initializing contract:", error);
     throw error;
   }
 };
 
-const didRegistry = initializeContract();
+const didRegistry = await initializeContract();
 export default didRegistry;
