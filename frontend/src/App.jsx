@@ -159,9 +159,12 @@ function App() {
       console.log("Current account:", account);
       console.log("Current network:", networkId);
       console.log("Contract methods available:", Object.keys(didRegistry.methods));
+      console.log("Contract address:", didRegistry._address);
       
       try {
+        console.log("Checking for existing DID...");
         const existingDID = await didRegistry.methods.getDID(account).call();
+        console.log("Existing DID:", existingDID);
         if (existingDID && existingDID !== '') {
           showModal(
             "DID Already Registered",
@@ -171,6 +174,7 @@ function App() {
           return;
         }
       } catch (checkError) {
+        console.log("Error checking existing DID:", checkError);
         if (!checkError.message.includes("DID not found")) {
           throw checkError;
         }
@@ -199,6 +203,7 @@ function App() {
           "success"
         );
       } catch (contractError) {
+        console.log("Contract interaction error:", contractError);
         if (contractError.message.includes("DID already registered")) {
           showModal(
             "DID Already Registered",
@@ -215,6 +220,7 @@ function App() {
         }
       }
     } catch (error) {
+      console.log("Error in registerDID:", error);
       showModal(
         "Error",
         `Failed to register DID: ${error.message}`,
@@ -238,8 +244,11 @@ function App() {
       console.log("Current account:", account);
       console.log("Current network:", networkId);
       console.log("Contract methods available:", Object.keys(didRegistry.methods));
+      console.log("Contract address:", didRegistry._address);
       
+      console.log("Calling getDID method...");
       const did = await didRegistry.methods.getDID(account).call();
+      console.log("Retrieved DID:", did);
       if (did && did !== '') {
         showModal(
           "DID Found",
@@ -254,6 +263,7 @@ function App() {
         );
       }
     } catch (error) {
+      console.log("Error in getDID:", error);
       if (error.message.includes("DID not found")) {
         showModal(
           "No DID Found",
