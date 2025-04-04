@@ -37,8 +37,12 @@ export const initializeContract = async () => {
     // Test contract accessibility
     try {
       console.log("Testing contract accessibility...");
-      const testCall = await contract.methods.getDID(accounts[0]).call();
-      console.log("Contract test call successful:", testCall);
+      if (accounts.length > 0) {
+        const testCall = await contract.methods.getDID(accounts[0]).call();
+        console.log("Contract test call successful:", testCall);
+      } else {
+        console.log("No accounts available for test call");
+      }
     } catch (testError) {
       console.error("Contract test call failed:", testError);
       throw new Error(`Contract not accessible: ${testError.message}`);
@@ -51,5 +55,13 @@ export const initializeContract = async () => {
   }
 };
 
-const didRegistry = await initializeContract();
+// Initialize contract only if web3 is available
+let didRegistry;
+if (typeof window !== 'undefined' && window.ethereum) {
+  didRegistry = initializeContract().catch(error => {
+    console.error("Failed to initialize contract:", error);
+    return null;
+  });
+}
+
 export default didRegistry;

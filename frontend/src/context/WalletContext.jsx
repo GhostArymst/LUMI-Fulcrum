@@ -18,14 +18,19 @@ export const WalletProvider = ({ children }) => {
     if (accounts.length === 0) {
       setAccount(null);
       setError("Please connect to MetaMask.");
+      setDidRegistry(null);
     } else if (accounts[0] !== account) {
       setAccount(accounts[0]);
-      initializeContract().then(contract => {
-        setDidRegistry(contract);
-      }).catch(error => {
-        console.error("Error re-initializing contract:", error);
-        setError(error.message);
-      });
+      initializeContract()
+        .then(contract => {
+          setDidRegistry(contract);
+          setError(null);
+        })
+        .catch(error => {
+          console.error("Error re-initializing contract:", error);
+          setError(error.message);
+          setDidRegistry(null);
+        });
     }
   };
 
@@ -33,20 +38,25 @@ export const WalletProvider = ({ children }) => {
     setNetworkId(chainId);
     if (chainId !== HARDHAT_NETWORK_ID) {
       setError("Please switch to Hardhat network!");
+      setDidRegistry(null);
     } else {
       setError(null);
-      initializeContract().then(contract => {
-        setDidRegistry(contract);
-      }).catch(error => {
-        console.error("Error re-initializing contract:", error);
-        setError(error.message);
-      });
+      initializeContract()
+        .then(contract => {
+          setDidRegistry(contract);
+        })
+        .catch(error => {
+          console.error("Error re-initializing contract:", error);
+          setError(error.message);
+          setDidRegistry(null);
+        });
     }
   };
 
   const connectWallet = async () => {
     try {
       if (window.ethereum) {
+        setIsLoading(true);
         await window.ethereum.request({
           method: 'wallet_requestPermissions',
           params: [{ eth_accounts: {} }]
@@ -74,6 +84,9 @@ export const WalletProvider = ({ children }) => {
     } catch (error) {
       console.error("Error connecting wallet:", error);
       setError(error.message);
+      setDidRegistry(null);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -81,6 +94,7 @@ export const WalletProvider = ({ children }) => {
     try {
       setAccount(null);
       setError(null);
+      setDidRegistry(null);
       console.log("Wallet disconnected");
     } catch (error) {
       console.error("Error disconnecting wallet:", error);
@@ -96,6 +110,8 @@ export const WalletProvider = ({ children }) => {
       });
       setNetworkId(HARDHAT_NETWORK_ID);
       setIsConnected(true);
+      const contract = await initializeContract();
+      setDidRegistry(contract);
     } catch (error) {
       if (error.code === 4902) {
         try {
@@ -114,11 +130,15 @@ export const WalletProvider = ({ children }) => {
           });
           setNetworkId(HARDHAT_NETWORK_ID);
           setIsConnected(true);
+          const contract = await initializeContract();
+          setDidRegistry(contract);
         } catch (addError) {
           setError(`Failed to add Hardhat network: ${addError.message}`);
+          setDidRegistry(null);
         }
       } else {
         setError(`Failed to switch network: ${error.message}`);
+        setDidRegistry(null);
       }
     } finally {
       setIsLoading(false);
@@ -132,10 +152,13 @@ export const WalletProvider = ({ children }) => {
           const chainId = await window.ethereum.request({ method: 'eth_chainId' });
           setNetworkId(chainId);
           setIsConnected(true);
+          const contract = await initializeContract();
+          setDidRegistry(contract);
         }
       } catch (error) {
         console.error("Error checking network:", error);
         setIsConnected(false);
+        setDidRegistry(null);
       }
     };
     
@@ -168,4 +191,4 @@ export const useWallet = () => {
     throw new Error('useWallet must be used within a WalletProvider');
   }
   return context;
-}; 
+};    
