@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useWallet } from '../context/WalletContext';
 import { useTheme } from '../context/ThemeContext';
-import NetworkStatus from './common/NetworkStatus';
+import NetworkStatus from './NetworkStatus';
 
 const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);

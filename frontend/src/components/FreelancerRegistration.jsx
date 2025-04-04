@@ -3,16 +3,13 @@ import { useNavigate } from 'react-router-dom';
 
 const FreelancerRegistration = () => {
   const navigate = useNavigate();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState('');
+
   const [formData, setFormData] = useState({
     fullName: '',
-    email: '',
-    password: '',
-    confirmPassword: '',
-    skills: '',
-    experience: '',
-    hourlyRate: '',
-    portfolio: '',
-    bio: '',
+    phoneNumber: '',
+    age: '',
   });
 
   const handleChange = (e) => {
@@ -21,18 +18,48 @@ const FreelancerRegistration = () => {
       ...prev,
       [name]: value
     }));
+    setError('');
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // TODO: Add form validation and submission logic
-    console.log('Form submitted:', formData);
-    navigate('/dashboard');
+    setError('');
+    
+    // Validate form data
+    if (!formData.fullName.trim()) {
+      setError('Full name cannot be empty');
+      return;
+    }
+
+    if (!formData.phoneNumber.trim()) {
+      setError('Phone number cannot be empty');
+      return;
+    }
+
+    const age = parseInt(formData.age);
+    if (isNaN(age) || age < 18) {
+      setError('You must be at least 18 years old');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Navigate to dashboard after successful registration
+      navigate('/dashboard');
+    } catch (error) {
+      console.error('Registration error:', error);
+      setError('Failed to register freelancer. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-2xl mx-auto">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
             Freelancer Registration
@@ -42,159 +69,60 @@ const FreelancerRegistration = () => {
           </p>
         </div>
 
+        {error && (
+          <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg">
+            <p className="text-red-600 dark:text-red-400">{error}</p>
+          </div>
+        )}
+
         <div className="bg-white dark:bg-gray-800 shadow-xl rounded-lg p-8">
           <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-              {/* Full Name */}
-              <div className="space-y-2">
-                <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Full Name
-                </label>
-                <input
-                  type="text"
-                  id="fullName"
-                  name="fullName"
-                  value={formData.fullName}
-                  onChange={handleChange}
-                  className="w-full h-12 px-4 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                  required
-                />
-              </div>
-
-              {/* Email */}
-              <div className="space-y-2">
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Email
-                </label>
-                <input
-                  type="email"
-                  id="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  className="w-full h-12 px-4 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                  required
-                />
-              </div>
-
-              {/* Password */}
-              <div className="space-y-2">
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Password
-                </label>
-                <input
-                  type="password"
-                  id="password"
-                  name="password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  className="w-full h-12 px-4 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                  required
-                />
-              </div>
-
-              {/* Confirm Password */}
-              <div className="space-y-2">
-                <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Confirm Password
-                </label>
-                <input
-                  type="password"
-                  id="confirmPassword"
-                  name="confirmPassword"
-                  value={formData.confirmPassword}
-                  onChange={handleChange}
-                  className="w-full h-12 px-4 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                  required
-                />
-              </div>
-
-              {/* Skills */}
-              <div className="space-y-2">
-                <label htmlFor="skills" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Skills (comma separated)
-                </label>
-                <input
-                  type="text"
-                  id="skills"
-                  name="skills"
-                  value={formData.skills}
-                  onChange={handleChange}
-                  className="w-full h-12 px-4 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                  placeholder="e.g., Web Development, UI/UX Design, Blockchain"
-                  required
-                />
-              </div>
-
-              {/* Experience */}
-              <div className="space-y-2">
-                <label htmlFor="experience" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Years of Experience
-                </label>
-                <select
-                  id="experience"
-                  name="experience"
-                  value={formData.experience}
-                  onChange={handleChange}
-                  className="w-full h-12 px-4 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                  required
-                >
-                  <option value="">Select Experience</option>
-                  <option value="0-1">0-1 years</option>
-                  <option value="1-3">1-3 years</option>
-                  <option value="3-5">3-5 years</option>
-                  <option value="5-10">5-10 years</option>
-                  <option value="10+">10+ years</option>
-                </select>
-              </div>
-
-              {/* Hourly Rate */}
-              <div className="space-y-2">
-                <label htmlFor="hourlyRate" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Hourly Rate ($)
-                </label>
-                <input
-                  type="number"
-                  id="hourlyRate"
-                  name="hourlyRate"
-                  value={formData.hourlyRate}
-                  onChange={handleChange}
-                  className="w-full h-12 px-4 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                  min="0"
-                  step="1"
-                  required
-                />
-              </div>
-
-              {/* Portfolio */}
-              <div className="space-y-2">
-                <label htmlFor="portfolio" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Portfolio URL
-                </label>
-                <input
-                  type="url"
-                  id="portfolio"
-                  name="portfolio"
-                  value={formData.portfolio}
-                  onChange={handleChange}
-                  className="w-full h-12 px-4 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                  placeholder="https://your-portfolio.com"
-                />
-              </div>
+            {/* Full Name */}
+            <div className="space-y-2">
+              <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Full Name
+              </label>
+              <input
+                type="text"
+                id="fullName"
+                name="fullName"
+                value={formData.fullName}
+                onChange={handleChange}
+                className="w-full h-12 px-4 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                required
+              />
             </div>
 
-            {/* Bio */}
+            {/* Phone Number */}
             <div className="space-y-2">
-              <label htmlFor="bio" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Professional Bio
+              <label htmlFor="phoneNumber" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Phone Number
               </label>
-              <textarea
-                id="bio"
-                name="bio"
-                value={formData.bio}
+              <input
+                type="tel"
+                id="phoneNumber"
+                name="phoneNumber"
+                value={formData.phoneNumber}
                 onChange={handleChange}
-                rows="5"
-                className="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                className="w-full h-12 px-4 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                placeholder="+1234567890"
+                required
+              />
+            </div>
+
+            {/* Age */}
+            <div className="space-y-2">
+              <label htmlFor="age" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Age
+              </label>
+              <input
+                type="number"
+                id="age"
+                name="age"
+                value={formData.age}
+                onChange={handleChange}
+                className="w-full h-12 px-4 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                min="18"
                 required
               />
             </div>
@@ -203,9 +131,14 @@ const FreelancerRegistration = () => {
             <div className="pt-4">
               <button
                 type="submit"
-                className="w-full py-3 px-4 border border-transparent rounded-lg shadow-sm text-base font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800"
+                disabled={isSubmitting}
+                className={`w-full py-3 px-4 border border-transparent rounded-lg shadow-sm text-base font-medium text-white ${
+                  isSubmitting 
+                    ? 'bg-blue-400 cursor-not-allowed' 
+                    : 'bg-blue-600 hover:bg-blue-700'
+                } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800`}
               >
-                Register as Freelancer
+                {isSubmitting ? 'Registering...' : 'Register as Freelancer'}
               </button>
             </div>
           </form>

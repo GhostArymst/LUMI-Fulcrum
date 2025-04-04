@@ -1,8 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useWallet } from '../context/WalletContext';
+import { useActivity } from '../context/ActivityContext';
 
 const BusinessRegistration = () => {
   const navigate = useNavigate();
+  const { account, isConnected } = useWallet();
+  const { addActivity } = useActivity();
+  const [isRegistered, setIsRegistered] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
   const [formData, setFormData] = useState({
     businessName: '',
     email: '',
@@ -15,6 +22,27 @@ const BusinessRegistration = () => {
     size: '',
   });
 
+  useEffect(() => {
+    const checkRegistration = async () => {
+      if (!account) {
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        // TODO: Replace with actual contract call to check if wallet is registered
+        const isAlreadyRegistered = false; // This should be replaced with actual contract check
+        setIsRegistered(isAlreadyRegistered);
+      } catch (error) {
+        console.error('Error checking registration:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    checkRegistration();
+  }, [account]);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -23,12 +51,74 @@ const BusinessRegistration = () => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    if (!isConnected || !account) {
+      alert('Please connect your wallet first');
+      return;
+    }
+
+    if (isRegistered) {
+      alert('This wallet address is already registered as a business');
+      return;
+    }
+
     // TODO: Add form validation and submission logic
     console.log('Form submitted:', formData);
-    navigate('/dashboard');
+    
+    try {
+      // TODO: Replace with actual contract call to register business
+      addActivity({
+        type: 'BUSINESS_REGISTER',
+        message: `Registered business: ${formData.businessName}`,
+        account: account
+      });
+      navigate('/dashboard');
+    } catch (error) {
+      console.error('Registration error:', error);
+      alert('Failed to register business. Please try again.');
+    }
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
+          <p className="mt-4 text-gray-600 dark:text-gray-300">Checking registration status...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isConnected) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Wallet Not Connected</h2>
+          <p className="text-gray-600 dark:text-gray-300">Please connect your wallet to register as a business.</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (isRegistered) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Already Registered</h2>
+          <p className="text-gray-600 dark:text-gray-300">This wallet address is already registered as a business.</p>
+          <button
+            onClick={() => navigate('/dashboard')}
+            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+          >
+            Go to Dashboard
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
