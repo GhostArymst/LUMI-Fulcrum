@@ -12,6 +12,9 @@ import DIDManagement from "./components/DIDManagement";
 import RecentActivity from "./components/RecentActivity";
 import Footer from "./components/Footer";
 import Home from './components/Home';
+import UserTypeSelection from './components/UserTypeSelection';
+import BusinessRegistration from './components/BusinessRegistration';
+import FreelancerRegistration from './components/FreelancerRegistration';
 import './styles/dark-mode.css';
 
 // Main App component
@@ -86,6 +89,9 @@ const AppContent = () => {
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/did-management" element={<DIDManagement />} />
           <Route path="/activity" element={<RecentActivity />} />
+          <Route path="/user-type" element={<UserTypeSelection />} />
+          <Route path="/business-registration" element={<BusinessRegistration />} />
+          <Route path="/freelancer-registration" element={<FreelancerRegistration />} />
         </Routes>
       </main>
 
