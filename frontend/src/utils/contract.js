@@ -23,7 +23,8 @@ export const initializeContract = async () => {
     console.log("Contract address from env:", contractAddress);
     
     if (!contractAddress) {
-      throw new Error("Contract address not found in environment variables");
+      console.warn("Contract address not found in environment variables");
+      return null;
     }
     
     // Get contract ABI
@@ -38,20 +39,25 @@ export const initializeContract = async () => {
     try {
       console.log("Testing contract accessibility...");
       if (accounts.length > 0) {
-        const testCall = await contract.methods.getDID(accounts[0]).call();
-        console.log("Contract test call successful:", testCall);
+        // Check if contract is deployed
+        const code = await web3.eth.getCode(contractAddress);
+        if (code === '0x') {
+          console.warn("Contract not deployed at this address");
+          return null;
+        }
+        console.log("Contract is deployed and accessible");
       } else {
         console.log("No accounts available for test call");
       }
     } catch (testError) {
-      console.error("Contract test call failed:", testError);
-      throw new Error(`Contract not accessible: ${testError.message}`);
+      console.warn("Contract test call failed:", testError);
+      return null;
     }
     
     return contract;
   } catch (error) {
     console.error("Error initializing contract:", error);
-    throw error;
+    return null;
   }
 };
 
